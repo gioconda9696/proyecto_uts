@@ -24,6 +24,7 @@ connection.connect((error) => {
 
 app.use(cors({
     origin: ['https://monitoreotelecoproyectouts.com', 'https://monitoreotelecoproyectouts.com:3000','http://monitoreotelecoproyectouts.com', 'http://monitoreotelecoproyectouts.com:3000'
+        ,'https://monitoreotelecoproyectouts.com/login'
         ,'http://localhost:3000'
         ,'http://192.168.105.215:3001'] // Ajusta seg�n sea necesario
 }));
