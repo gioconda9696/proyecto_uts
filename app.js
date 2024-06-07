@@ -8,7 +8,7 @@ const PORT = 2001;
 
 
 const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '162.240.158.67',
     user: 'wwmoni_uts',
     password: 'Dios2024.',
     database: 'wwmoni_uts'
