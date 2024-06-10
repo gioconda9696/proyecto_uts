@@ -90,20 +90,21 @@ app.delete('/usuarios/:id', (req, res) => {
 
 // Ruta API para iniciar sesión
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    connection.query('SELECT * FROM users WHERE user = ? AND password = ?', [username, password], (error, results, fields) => {
-        if (error) {
-            console.error('Error al ejecutar la consulta:', error);
-            return res.status(500).json({ success: false, message: 'Error de servidor' });
-        }
+  const { username, password } = req.body;
+  connection.query('SELECT * FROM users WHERE user = ? AND password = ?', [username, password], (error, results, fields) => {
+    if (error) {
+      console.error('Error al ejecutar la consulta:', error);
+      return res.status(500).json({ success: false, message: 'Error de conexión con la base de datos' });
+    }
 
-        if (results.length > 0) {
-            res.json({ success: true, message: 'Inicio de sesi�n exitoso' });
-        } else {
-            res.status(401).json({ success: false, message: 'Credenciales inv�lidas' });
-        }
-    });
+    if (results.length > 0) {
+      res.json({ success: true, message: 'Inicio de sesión exitoso' });
+    } else {
+      res.status(401).json({ success: false, message: 'Credenciales inválidas' });
+    }
+  });
 });
+
 
 
 app.listen(PORT, () => {
