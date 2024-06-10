@@ -11,6 +11,7 @@ app.use(cors({
         ,'https://monitoreotelecoproyectouts.com/login'
         ,'https://www.monitoreotelecoproyectouts.com'
         ,'http://localhost:3000'
+        ,'http://192.168.80.16:3000'
         ,'http://192.168.105.215:3001'] // Ajusta según sea necesario
 }));
 app.use(express.json());
