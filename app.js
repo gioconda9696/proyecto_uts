@@ -4,7 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const https = require('https');
 //add 10/06/2024
-//const db = require('./db');
+const db = require('./db');
 
 const app = express();
 const PORT = 2001;
@@ -91,20 +91,17 @@ app.delete('/usuarios/:id', (req, res) => {
 // Ruta API para iniciar sesión
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    const dbInstance = db.getInstance();
-    dbInstance.connect();
-    dbInstance.connection.query('SELECT * FROM users WHERE user = ? AND password = ?', [username, password], (error, results, fields) => {
+    connection.query('SELECT * FROM users WHERE user = ? AND password = ?', [username, password], (error, results, fields) => {
         if (error) {
             console.error('Error al ejecutar la consulta:', error);
             return res.status(500).json({ success: false, message: 'Error de servidor' });
         }
 
         if (results.length > 0) {
-            res.json({ success: true, message: 'Inicio de sesión exitoso' });
+            res.json({ success: true, message: 'Inicio de sesi�n exitoso' });
         } else {
-            res.status(401).json({ success: false, message: 'Credenciales inválidas' });
+            res.status(401).json({ success: false, message: 'Credenciales inv�lidas' });
         }
-        dbInstance.disconnect();
     });
 });
 
