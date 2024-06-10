@@ -6,6 +6,22 @@ const app = express();
 const PORT = 2001;
 const db = require('./db');
 
+
+const connection = mysql.createConnection({
+    host: '162.240.158.67',
+    user: 'wwmoni_uts',
+    password: 'Dios2024.',
+    database: 'wwmoni_uts'
+});
+
+connection.connect((error) => {
+    if (error) {
+        console.error('Error al conectar a la base de datos:', error);
+        return;
+    }
+    console.log('Conexi�n exitosa a la base de datos');
+});
+
 app.use(cors({
     origin: ['https://monitoreotelecoproyectouts.com', 'https://monitoreotelecoproyectouts.com:3000','http://monitoreotelecoproyectouts.com', 'http://monitoreotelecoproyectouts.com:3000'
         ,'https://monitoreotelecoproyectouts.com/login'
