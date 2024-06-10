@@ -1,6 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
-const cors = require('fs');
+const cors = require('cors');
 const https = require('https');
 const app = express();
 const PORT = 2001;
