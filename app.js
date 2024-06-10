@@ -4,7 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const https = require('https');
 //add 10/06/2024
-const db = require('./db');
+//const db = require('./db');
 
 const app = express();
 const PORT = 2001;
