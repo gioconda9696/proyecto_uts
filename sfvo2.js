@@ -1,32 +1,41 @@
 const nodemailer = require('nodemailer');
 const ExcelJS = require('exceljs');
-const { app, connection } = require('./app.js');
+const app = require('./app.js').app;
+const connection = require('./db.js').connection;
 
 const NombreTabla = "sfvo2";
 const NombreExcel = "SFVO2";
 
 app.get('/sfvo2', (req, res) => {
-    connection.query(`SELECT Voltaje , Corriente , Hora FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 150`, (error, results, fields) => {
+    const dbInstance = db.getInstance();
+    dbInstance.connect();
+    dbInstance.connection.query(`SELECT Voltaje , Corriente , Hora FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 150`, (error, results, fields) => {
         if (error) {
             console.error('Error al ejecutar la consulta:', error);
             return res.status(500).send('Error de servidor');
         }
         res.json(results);
+        dbInstance.disconnect();
     });
 });
 
 app.get('/sfvo2_5min', (req, res) => {
-    connection.query(`SELECT * FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 1`, (error, results, fields) => {
+    const dbInstance = db.getInstance();
+    dbInstance.connect();
+    dbInstance.connection.query(`SELECT * FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 1`, (error, results, fields) => {
         if (error) {
             console.error('Error al ejecutar la consulta:', error);
             return res.status(500).send('Error de servidor');
         }
         res.json(results[0]);
+        dbInstance.disconnect();
     });
 });
 
 app.get('/sfvo2_ultimosdatos', (req, res) => {
-    connection.query(`SELECT * FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 11`, (error, results, fields) => {
+    const dbInstance = db.getInstance();
+    dbInstance.connect();
+    dbInstance.connection.query(`SELECT * FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 11`, (error, results, fields) => {
         if (error) {
             console.error('Error al ejecutar la consulta:', error);
             return res.status(500).send('Error de servidor');
@@ -45,12 +54,15 @@ app.get('/sfvo2_ultimosdatos', (req, res) => {
             }
         });
         res.json(dataWithDifferences);
+        dbInstance.disconnect();
     });
 });
 
 app.get('/sfvo2_exportarexcel', (req, res) => {
     // Consulta para obtener los datos de la tabla 'datos'
-    connection.query(`SELECT Voltaje , Corriente , Hora FROM ${NombreTabla}`, async (error, results) => {
+    const dbInstance = db.getInstance();
+    dbInstance.connect();
+    dbInstance.connection.query(`SELECT Voltaje , Corriente , Hora FROM ${NombreTabla}`, async (error, results) => {
         if (error) {
             console.error('Error al obtener los datos de la base de datos:', error);
             res.status(500).send('Error al obtener los datos de la base de datos');
@@ -80,7 +92,7 @@ app.get('/sfvo2_exportarexcel', (req, res) => {
                 const buffer = await workbook.xlsx.writeBuffer();
 
                 // Consulta para obtener los correos electrónicos de la tabla 'destinatarios'
-                connection.query('SELECT user FROM users', async (error, destinatarios) => {
+                dbInstance.connection.query('SELECT user FROM users', async (error, destinatarios) => {
                     if (error) {
                         console.error('Error al obtener los destinatarios de correo de la base de datos:', error);
                         res.status(500).send('Error al obtener los destinatarios de correo de la base de datos');
@@ -99,7 +111,7 @@ app.get('/sfvo2_exportarexcel', (req, res) => {
                                     pass: 'xxqe hzlo djkp jzsc'
                                 }
                             });
-            
+
                             // Adjuntar el archivo Excel al correo electrónico
                             const mailOptions = {
                                 from: 'proyectotelecomunicacionesuts@gmail.com',
@@ -124,22 +136,27 @@ app.get('/sfvo2_exportarexcel', (req, res) => {
                         console.error('Error al enviar el correo electrónico:', error);
                         res.status(500).send('Error al enviar el correo electrónico');
                     }
+                    dbInstance.disconnect();
                 });
             } else {
                 console.error('La consulta no devolvió resultados');
                 res.status(500).send('La consulta no devolvió resultados');
+                dbInstance.disconnect();
             }
         } catch (err) {
             console.error('Error al procesar los datos:', err);
             res.status(500).send('Error al procesar los datos');
+            dbInstance.disconnect();
         }
     });
 });
 
 // Función para exportar los datos y enviar el correo electrónico
 async function exportAndEmailData() {
-    
     try {
+        const dbInstance = db.getInstance();
+        dbInstance.connect();
+
         const results = await queryDatabase(`SELECT Voltaje, Corriente, Hora FROM ${NombreTabla}`);
         const destinatarios = await queryDatabase('SELECT user FROM users');
 
@@ -178,7 +195,6 @@ async function exportAndEmailData() {
                     content: buffer
                 }]
             };
-
             // Enviar el correo electrónico
             const info = await transporter.sendMail(mailOptions);
             console.log('Correo electrónico enviado: ' + info.response);
@@ -190,6 +206,8 @@ async function exportAndEmailData() {
     } catch (error) {
         console.error('Error:', error);
         return;
+    } finally {
+        dbInstance.disconnect();
     }
 }
 
@@ -209,12 +227,12 @@ function queryDatabase(sql) {
 async function performExecutionIfNeeded() {
     const now = new Date();
     if (now.getDate() === 15 || now.getDate() === 30) { // Si es el 15 o el 30
-    await exportAndEmailData(); // Ejecuta la tarea
+        await exportAndEmailData(); // Ejecuta la tarea
     }
     if (now.getDate() === 30) {
-    // Borrar los datos de la tabla 'datos' después de enviar el correo
-    await queryDatabase(`TRUNCATE TABLE ${NombreTabla}`);
-    console.log('Datos borrados correctamente de la tabla.'); 
+        // Borrar los datos de la tabla 'datos' después de enviar el correo
+        await queryDatabase(`TRUNCATE TABLE ${NombreTabla}`);
+        console.log('Datos borrados correctamente de la tabla.');
     }
     scheduleNextExecution(); // Programa la próxima ejecución
 }
