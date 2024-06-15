@@ -22,7 +22,7 @@ connection.connect((error) => {
         console.error('Error al conectar a la base de datos:', error);
         return;
     }
-    console.log('Conexi�n exitosa a la base de datos');
+    console.log('Conexi n exitosa a la base de datos');
 });
 
 app.use(cors({
@@ -31,9 +31,9 @@ app.use(cors({
         ,'https://www.monitoreotelecoproyectouts.com'
         ,'http://localhost:3000'
         ,'http://192.168.0.100'
-        ,'http://192.168.0.10'
+        ,'http://192.168.0.101'
         ,'http://192.168.1.84'
-        ,'http://192.168.105.215:3001'] // Ajusta seg�n sea necesario
+        ,'http://192.168.105.215:3001'] // Ajusta seg n sea necesario
 }));
 app.use(express.json());
 
@@ -41,7 +41,7 @@ module.exports = { app, connection };
 require('./sfvo1.js');
 require('./sfvo2.js');
 
-// Ruta para verificar que el servidor est� funcionando
+// Ruta para verificar que el servidor est  funcionando
 app.get('/', (req, res) => {
     res.send('Servidor funcionando correctamente');
 });
@@ -91,6 +91,30 @@ app.delete('/usuarios/:id', (req, res) => {
     });
 });
 
+// Ruta para insertar datos de sfvo1
+app.post('/datos/sfvo1', (req, res) => {
+    const { voltaje, corriente, sistema } = req.body;
+    connection.query('INSERT INTO sfvo1 (voltaje, corriente, sistema) VALUES (?, ?, ?)', [voltaje, corriente, sistema], (error, results, fields) => {
+        if (error) {
+            console.error('Error al insertar datos en sfvo1:', error);
+            return res.status(500).send('Error de servidor');
+        }
+        res.json({ message: 'Datos de sfvo1 guardados correctamente' });
+    });
+});
+
+// Ruta para insertar datos de sfvo2
+app.post('/datos/sfvo2', (req, res) => {
+    const { voltaje, corriente, sistema } = req.body;
+    connection.query('INSERT INTO sfvo2 (voltaje, corriente, sistema) VALUES (?, ?, ?)', [voltaje, corriente, sistema], (error, results, fields) => {
+        if (error) {
+            console.error('Error al insertar datos en sfvo2:', error);
+            return res.status(500).send('Error de servidor');
+        }
+        res.json({ message: 'Datos de sfvo2 guardados correctamente' });
+    });
+});
+
 // Ruta API para iniciar sesión
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -107,8 +131,6 @@ app.post('/login', (req, res) => {
     }
   });
 });
-
-
 
 app.listen(PORT, () => {
     console.log(`Servidor ejecutándose en el puerto ${PORT}`);
