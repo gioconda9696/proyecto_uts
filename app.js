@@ -31,7 +31,7 @@ app.use(cors({
         ,'https://www.monitoreotelecoproyectouts.com'
         ,'http://localhost:3000'
         ,'http://192.168.0.100'
-        ,'http://192.168.0.10'
+        ,'http://192.168.0.101'
         ,'http://192.168.1.84'
         ,'http://192.168.105.215:3001'] // Ajusta seg�n sea necesario
 }));
@@ -90,6 +90,31 @@ app.delete('/usuarios/:id', (req, res) => {
         res.json({ message: 'Usuario eliminado correctamente' });
     });
 });
+
+// Ruta para insertar datos de sfvo1
+app.post('/datos/sfvo1', (req, res) => {
+    const { voltaje, corriente, sistema } = req.body;
+    connection.query('INSERT INTO sfvo1 (voltaje, corriente, sistema) VALUES (?, ?, ?)', [voltaje, corriente, sistema], (error, results, fields) => {
+        if (error) {
+            console.error('Error al insertar datos en sfvo1:', error);
+            return res.status(500).send('Error de servidor');
+        }
+        res.json({ message: 'Datos de sfvo1 guardados correctamente' });
+    });
+});
+
+// Ruta para insertar datos de sfvo2
+app.post('/datos/sfvo2', (req, res) => {
+    const { voltaje, corriente, sistema } = req.body;
+    connection.query('INSERT INTO sfvo2 (voltaje, corriente, sistema) VALUES (?, ?, ?)', [voltaje, corriente, sistema], (error, results, fields) => {
+        if (error) {
+            console.error('Error al insertar datos en sfvo2:', error);
+            return res.status(500).send('Error de servidor');
+        }
+        res.json({ message: 'Datos de sfvo2 guardados correctamente' });
+    });
+});
+
 
 // Ruta API para iniciar sesión
 app.post('/login', (req, res) => {
