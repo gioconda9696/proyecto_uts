@@ -3,8 +3,6 @@ const mysql = require('mysql');
 const cors = require('cors');
 const fs = require('fs');
 const https = require('https');
-//add 10/06/2024
-const db = require('./db');
 
 const app = express();
 const PORT = 2001;
@@ -22,7 +20,7 @@ connection.connect((error) => {
         console.error('Error al conectar a la base de datos:', error);
         return;
     }
-    console.log('Conexi n exitosa a la base de datos');
+    console.log('Conexin exitosa a la base de datos');
 });
 
 app.use(cors({
@@ -94,7 +92,7 @@ app.delete('/usuarios/:id', (req, res) => {
 // Ruta para insertar datos de sfvo1
 app.post('/datos/sfvo1', (req, res) => {
     const { voltaje, corriente, sistema } = req.body;
-    connection.query('INSERT INTO sfvo1 (voltaje, corriente, sistema) VALUES (?, ?, ?)', [voltaje, corriente, sistema], (error, results, fields) => {
+    connection.query('INSERT INTO sfvo1 (Voltaje,Corriente,Sistema,Hora,fecha) VALUES (?, ?, ?, NOW(),NOW())', [voltaje, corriente, sistema], (error, results, fields) => {
         if (error) {
             console.error('Error al insertar datos en sfvo1:', error);
             return res.status(500).send('Error de servidor');
@@ -106,7 +104,7 @@ app.post('/datos/sfvo1', (req, res) => {
 // Ruta para insertar datos de sfvo2
 app.post('/datos/sfvo2', (req, res) => {
     const { voltaje, corriente, sistema } = req.body;
-    connection.query('INSERT INTO sfvo2 (voltaje, corriente, sistema) VALUES (?, ?, ?)', [voltaje, corriente, sistema], (error, results, fields) => {
+    connection.query('INSERT INTO sfvo2 (Voltaje,Corriente,Sistema,Hora,fecha) VALUES (?, ?, ?, NOW(),NOW())', [voltaje, corriente, sistema], (error, results, fields) => {
         if (error) {
             console.error('Error al insertar datos en sfvo2:', error);
             return res.status(500).send('Error de servidor');
