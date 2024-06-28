@@ -6,14 +6,22 @@ const NombreTabla = "sfvo2";
 const NombreExcel = "SFVO2";
 
 app.get('/sfvo2', (req, res) => {
-    connection.query(`SELECT Voltaje , Corriente , Hora FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 150`, (error, results, fields) => {
+    connection.query(`SELECT Voltaje , Corriente , Hora, fecha FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 150`, (error, results, fields) => {
         if (error) {
             console.error('Error al ejecutar la consulta:', error);
             return res.status(500).send('Error de servidor');
         }
-        res.json(results);
+
+        // Formatear la fecha antes de enviarla al cliente
+        const formattedResults = results.map(entry => ({
+            ...entry,
+            fecha: entry.fecha.toISOString().split('T')[0]  // Extrae solo la parte de la fecha
+        }));
+
+        res.json(formattedResults);
     });
 });
+
 
 app.get('/sfvo2_5min', (req, res) => {
     connection.query(`SELECT * FROM ${NombreTabla} ORDER BY Datoid DESC LIMIT 1`, (error, results, fields) => {
@@ -31,26 +39,37 @@ app.get('/sfvo2_ultimosdatos', (req, res) => {
             console.error('Error al ejecutar la consulta:', error);
             return res.status(500).send('Error de servidor');
         }
+
+        // Formatear la fecha y calcular las diferencias
         const dataWithDifferences = results.map((data, index) => {
+            // Formatear la fecha
+            const formattedDate = data.fecha.toISOString().split('T')[0];
+
             if (index === results.length - 1) {
-                return { ...data, VoltajeDiferencia: 0, CorrienteDiferencia: 0};
-            } else {
-                const voltajeDiferencia = data.Voltaje-results[index + 1].Voltaje;
-                const corrienteDiferencia = data.Corriente- results[index + 1].Corriente;
                 return { 
                     ...data, 
+                    fecha: formattedDate, // Usar la fecha formateada
+                    VoltajeDiferencia: 0, 
+                    CorrienteDiferencia: 0
+                };
+            } else {
+                const voltajeDiferencia = data.Voltaje - results[index + 1].Voltaje;
+                const corrienteDiferencia = data.Corriente - results[index + 1].Corriente;
+                return { 
+                    ...data, 
+                    fecha: formattedDate, // Usar la fecha formateada
                     VoltajeDiferencia: voltajeDiferencia, 
-                    CorrienteDiferencia: corrienteDiferencia, 
+                    CorrienteDiferencia: corrienteDiferencia
                 };
             }
         });
+
         res.json(dataWithDifferences);
     });
 });
 
 app.get('/sfvo2_exportarexcel', (req, res) => {
-    // Consulta para obtener los datos de la tabla 'datos'
-    connection.query(`SELECT Voltaje , Corriente , Hora FROM ${NombreTabla}`, async (error, results) => {
+    connection.query(`SELECT Voltaje, Corriente, Hora, fecha FROM ${NombreTabla}`, async (error, results) => {
         if (error) {
             console.error('Error al obtener los datos de la base de datos:', error);
             res.status(500).send('Error al obtener los datos de la base de datos');
@@ -58,17 +77,23 @@ app.get('/sfvo2_exportarexcel', (req, res) => {
         }
 
         try {
+            // Formatear las fechas
+            const formattedResults = results.map(entry => ({
+                ...entry,
+                fecha: entry.fecha ? entry.fecha.toISOString().split('T')[0] : null // Verificar si fecha no es null
+            }));
+
             // Crear un nuevo archivo Excel
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet(NombreExcel);
 
             // Verificar si hay resultados de la consulta
-            if (results.length > 0) {
+            if (formattedResults.length > 0) {
                 // Mapear los resultados para obtener solo los valores (filas)
-                const rows = results.map(result => Object.values(result));
+                const rows = formattedResults.map(result => Object.values(result));
                 
                 // Agregar los encabezados de las columnas
-                const columnHeaders = Object.keys(results[0]);
+                const columnHeaders = Object.keys(formattedResults[0]);
                 worksheet.addRow(columnHeaders);
 
                 // Agregar las filas de datos al archivo Excel
@@ -138,17 +163,22 @@ app.get('/sfvo2_exportarexcel', (req, res) => {
 
 // Función para exportar los datos y enviar el correo electrónico
 async function exportAndEmailData() {
-    
     try {
-        const results = await queryDatabase(`SELECT Voltaje, Corriente, Hora FROM ${NombreTabla}`);
+        const results = await queryDatabase(`SELECT Voltaje, Corriente, Hora, fecha FROM ${NombreTabla}`);
         const destinatarios = await queryDatabase('SELECT user FROM users');
 
         if (results.length > 0 && destinatarios.length > 0) {
+            // Formatear las fechas
+            const formattedResults = results.map(entry => ({
+                ...entry,
+                fecha: entry.fecha ? entry.fecha.toISOString().split('T')[0] : null // Verificar si fecha no es null
+            }));
+
             // Crear el archivo Excel y configurar el transporte del correo
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet(NombreExcel);
-            const rows = results.map(result => Object.values(result));
-            const columnHeaders = Object.keys(results[0]);
+            const rows = formattedResults.map(result => Object.values(result));
+            const columnHeaders = Object.keys(formattedResults[0]);
             worksheet.addRow(columnHeaders);
 
             rows.forEach(row => {
@@ -172,7 +202,7 @@ async function exportAndEmailData() {
                 from: 'proyectotelecomunicacionesuts@gmail.com',
                 to: destinatariosList,
                 subject: 'Base de Datos exportada de el SFVO2',
-                text: 'estos son los datos tomados dentro de los 15 dias de el SFVO2',
+                text: 'Estos son los datos tomados dentro de los 15 días de el SFVO2',
                 attachments: [{
                     filename: `${NombreExcel}_15dias.xlsx`,
                     content: buffer
